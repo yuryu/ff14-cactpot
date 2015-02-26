@@ -53,7 +53,7 @@ function rowColStr(row, col) {
 
 function clearCellClass(cell) {
 	cell.removeClass("has-error").removeClass("success")
-		.removeClass("active").removeClass("danger");
+		.removeClass("info").removeClass("danger");
 }
 
 function validateScratch() {
@@ -86,12 +86,12 @@ function validateScratch() {
 	}
 	if ( count == 1 ) {
 		if ( table[1][1] == 0 ) {
-			$("#" + rowColStr(1, 1)).addClass("active");
+			$("#" + rowColStr(1, 1)).addClass("info");
 		} else {
-			$("#" + rowColStr(0, 0)).addClass("active");
-			$("#" + rowColStr(0, 2)).addClass("active");
-			$("#" + rowColStr(2, 0)).addClass("active");
-			$("#" + rowColStr(2, 2)).addClass("active");
+			$("#" + rowColStr(0, 0)).addClass("info");
+			$("#" + rowColStr(0, 2)).addClass("info");
+			$("#" + rowColStr(2, 0)).addClass("info");
+			$("#" + rowColStr(2, 2)).addClass("info");
 		}
 	}
 	if ( count > maxRevealedNums ) {
@@ -172,8 +172,8 @@ function solveScratch() {
 	}
 	var solver = new Solver();
 	var result = solver.solve(table, payout);
-	var maxindex = 0;
-	var maxvalue = 0;	
+	var maxindex = [];
+	var maxvalue = result[0];
 	for ( var i = 0; i < result.length; i++ ) {
 		if ( i < size ) {
 			$("#er" + i).text(Math.floor(result[i]));
@@ -182,26 +182,81 @@ function solveScratch() {
 		} else {
 			$("#ed" + (i - size * 2)).text(Math.floor(result[i]));
 		}
-		if ( maxvalue <= result[i] ) {
-			maxindex = i;
+		if ( maxvalue == result[i] ) {
+			maxindex.push(i);
+		} else if ( maxvalue < result[i] ) {
+			maxindex = [i];
 			maxvalue = result[i];
 		}
 	}
-	$("#scratch .exp").removeClass("success").removeClass("active");
+	$("#scratch .exp").removeClass("success");
 
 	var highlightClass = "success";
-	if ( revealed != maxRevealedNums ) highlightClass = "active";
-	if ( maxindex < size ) {
-		highlightHorizontal(maxindex, highlightClass);
-		$("#er" + maxindex).addClass(highlightClass);
-	} else if ( maxindex < size * 2 ) {
-		highlightVertical(maxindex - size, highlightClass);
-		$("#ec" + (maxindex - size)).addClass(highlightClass);
+	if ( revealed != maxRevealedNums ) {
+		suggestNext(table, result);
 	} else {
-		highlightDiagonal(maxindex - size * 2, highlightClass);
-		$("#ed" + (maxindex - size * 2)).addClass(highlightClass);
+		maxindex.forEach(function(v, i, a){
+			if ( v < size ) {
+				highlightHorizontal(v, highlightClass);
+				$("#er" + v).addClass(highlightClass);
+			} else if ( v < size * 2 ) {
+				highlightVertical(v - size, highlightClass);
+				$("#ec" + (v - size)).addClass(highlightClass);
+			} else {
+				highlightDiagonal(v - size * 2, highlightClass);
+				$("#ed" + (v - size * 2)).addClass(highlightClass);
+			}
+		});
 	}
+}
 
+function suggestNext(table, result) {
+	var tablerank = [];
+	var row;
+	for ( var i = 0; i < size * size; i++ ) {
+		if ( i % size == 0 ) {
+			row = [];
+			tablerank.push(row);
+		}
+		row.push(0);
+	}
+	result.forEach(function(r, i, a) {
+		if ( i < size ) {
+			for ( var col = 0; col < size; col++ ) {
+				tablerank[i][col] += r;
+			}
+		} else if ( i < size * 2 ) {
+			for ( var row = 0; row < size; row++ ) {
+				tablerank[row][i - size] += r;
+			}
+		} else {
+			var dir = i - (size * 2);
+			for ( var row = 0 ; row < size; row++ ) {
+				var col = row;
+				if ( dir == 1 ) {
+					col = size - row - 1;
+				}
+				tablerank[row][col] += r;
+			}
+		}
+	});
+
+	var bestvalue = 0;
+	var best = [];
+	for ( var row = 0; row < size; row++ ) {
+		for ( var col = 0; col < size; col++ ) {
+			if ( table[row][col] != 0 ) continue;
+			if ( bestvalue == tablerank[row][col] ) {
+				best.push([row, col]);
+			} else if ( bestvalue < tablerank[row][col] ) {
+				best = [[row, col]];
+				bestvalue = tablerank[row][col];
+			}
+		}
+	}
+	best.forEach(function(v, i, a) {
+		$("#" + rowColStr(v[0], v[1])).addClass("info");
+	});
 }
 
 function resetScratch() {
