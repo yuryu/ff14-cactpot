@@ -60,13 +60,15 @@ function validateScratch() {
 	var ints = {};
 	var count = 0;
 	var success = true;
-	var table = [], row = [];
+	var table = [];
 	for ( var i = 0; i < size * size; i++ ) {
-		var v = parseInt($("#scratch select[name='" + i + "'] option:selected").val());
-		row.push(v);
-		if ( i % size == (size - 1) ) {
+		if ( i % size == 0 ) {
+			row = [];
 			table.push(row);
 		}
+		var v = parseInt($("#scratch select[name='" + i + "'] option:selected").val());
+		row.push(v);
+
 		clearCellClass($("#scratch select[name='" + i + "']").parent());
 		if ( v != 0 ) {
 			if ( ints[v] ) {
@@ -80,6 +82,16 @@ function validateScratch() {
 			}
 			ints[v] = [i];
 			count++;
+		}
+	}
+	if ( count == 1 ) {
+		if ( table[1][1] == 0 ) {
+			$("#" + rowColStr(1, 1)).addClass("active");
+		} else {
+			$("#" + rowColStr(0, 0)).addClass("active");
+			$("#" + rowColStr(0, 2)).addClass("active");
+			$("#" + rowColStr(2, 0)).addClass("active");
+			$("#" + rowColStr(2, 2)).addClass("active");
 		}
 	}
 	if ( count > maxRevealedNums ) {
@@ -176,6 +188,7 @@ function solveScratch() {
 		}
 	}
 	$("#scratch .exp").removeClass("success").removeClass("active");
+
 	var highlightClass = "success";
 	if ( revealed != maxRevealedNums ) highlightClass = "active";
 	if ( maxindex < size ) {
