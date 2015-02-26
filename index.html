@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FF14 くじテンダーソルバー</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="./style.css">
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+	<script type="text/javascript" src="./js/i18next.min.js"></script>
+	<script type="text/javascript" src="./js/gs-oasis.js"></script>
+	<script type="text/javascript" src="./js/solver.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body>
+	<nav class="navbar navbar-default">
+		<div class="container">
+			<p class="i18n navbar-text" data-i18n="title">FF14 くじテンダーソルバー</p>
+			<p class="navbar-text navbar-right">
+				<a href="?lang=ja" class="navbar-link">日本語</a> | <a href="?lang=en" class="navbar-link">English</a>
+			</p>
+		</div>
+	</nav>
+	<div class="container">
+		<main>
+			<div class="row">
+			</div>
+
+			<div class="row">
+				<div class="col-md-6">
+					<h2 class="i18n" data-i18n="scratch">スクラッチ</h2>
+					<form id="scratchform">
+
+						<table id="scratch" class="table table-bordered form-group form-group-sm">
+							<tbody>
+								<tr class="exprow">
+									<td id="ed0" class="exp">&nbsp;</td>
+									<td id="ec0" class="exp">&nbsp;</td>
+									<td id="ec1" class="exp">&nbsp;</td>
+									<td id="ec2" class="exp">&nbsp;</td>
+									<td id="ed1" class="exp">&nbsp;</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<input type="button" name="solve" value="Solve" onclick="solveScratch()" class="btn btn-lg btn-primary" disabled="disabled">
+						<input type="button" name="reset" value="Reset" onclick="resetScratch()"
+						class="btn btn-lg btn-default">
+					</form>
+				</div>
+
+				<div class="col-md-3 col-sm-3">
+					<h2 class="i18n" data-i18n="payout">払い出し</h2>
+					<table id="payout" class="table table-condensed form-group form-group-sm">
+						<thead>
+							<tr><th>#</th><th>MGP</th><th>#</th><th>MGP</th></tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+
+			</div>
+		</main>
+		<footer class="row">
+			<p>Tested with Google Chrome 40, Firefox 36 and Safari (iOS 8)<br>
+				Operated by <a href="https://twitter.com/Yuryu">@Yuryu</a>
+			</p>
+			<p>
+				FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
+			</p>
+		</footer>
+	</div>
+
+<script>
+if (document.location.hostname == "ff14-cactpot.wotax.net") {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-27065326-3', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+
+</body>
+
+</html>
