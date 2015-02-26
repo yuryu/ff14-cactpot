@@ -182,7 +182,7 @@ function solveScratch() {
 		} else {
 			$("#ed" + (i - size * 2)).text(Math.floor(result[i]));
 		}
-		if ( maxvalue < result[i] ) {
+		if ( maxvalue <= result[i] ) {
 			maxindex = i;
 			maxvalue = result[i];
 		}
