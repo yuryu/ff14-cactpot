@@ -31,7 +31,8 @@ var payout = [
 ];
 
 var size = 3;
-var requiredNums = 4;
+var requiredNums = 2;
+var maxRevealedNums = 4;
 var payoutMin = 6;
 var payoutMax = 24;
 var payoutNum = payoutMax - payoutMin + 1;
@@ -50,15 +51,23 @@ function rowColStr(row, col) {
 	return "r" + row + "c" + col;
 }
 
+function clearCellClass(cell) {
+	cell.removeClass("has-error").removeClass("success")
+		.removeClass("active").removeClass("danger");
+}
+
 function validateScratch() {
 	var ints = {};
 	var count = 0;
 	var success = true;
+	var table = [], row = [];
 	for ( var i = 0; i < size * size; i++ ) {
 		var v = parseInt($("#scratch select[name='" + i + "'] option:selected").val());
-		$("#scratch select[name='" + i + "']").parent()
-			.removeClass("has-error").removeClass("success")
-			.removeClass("danger");
+		row.push(v);
+		if ( i % size == (size - 1) ) {
+			table.push(row);
+		}
+		clearCellClass($("#scratch select[name='" + i + "']").parent());
 		if ( v != 0 ) {
 			if ( ints[v] ) {
 				ints[v].forEach(function(v, i, a){
@@ -73,7 +82,7 @@ function validateScratch() {
 			count++;
 		}
 	}
-	if ( count > requiredNums ) {
+	if ( count > maxRevealedNums ) {
 		for ( var i in ints ) {
 			if ( ints.hasOwnProperty(i) ) {
 				ints[i].forEach(function(v, i, a){
@@ -82,8 +91,9 @@ function validateScratch() {
 				});
 			}
 		}
+		return false;
 	}
-	return count == requiredNums && success;
+	return count >= requiredNums && success;
 }
 
 function createScratch(table) {
@@ -103,7 +113,7 @@ function createScratch(table) {
 			solveScratch();
 			$("#scratchform input[name='solve']").removeAttr("disabled");
 		} else {
-			$("#scratch .exp").removeClass("success");
+			clearCellClass($("#scratch .exp"));
 			$("#scratch .exp").html("&nbsp;");
 			$("#scratchform input[name='solve']").attr("disabled", "disabled");
 		}
@@ -112,25 +122,25 @@ function createScratch(table) {
 
 
 
-function highlightHorizontal(row) {
+function highlightHorizontal(row, c) {
 	for ( var i = 0; i < size; i++ ) {
-		$("#" + rowColStr(row, i)).addClass("success");
+		$("#" + rowColStr(row, i)).addClass(c);
 	}
 }
 
-function highlightVertical(col) {
+function highlightVertical(col, c) {
 	for ( var i = 0; i < size; i++ ) {
-		$("#" + rowColStr(i, col)).addClass("success");
+		$("#" + rowColStr(i, col)).addClass(c);
 	}
 }
 
-function highlightDiagonal(dir) {
+function highlightDiagonal(dir, c) {
 	for ( var i = 0 ; i < size; i++ ) {
 		var col = i;
 		if ( dir == 1 ) {
 			col = size - i - 1;
 		}
-		$("#" + rowColStr(i, col)).addClass("success");
+		$("#" + rowColStr(i, col)).addClass(c);
 	}
 }
 
@@ -138,12 +148,15 @@ function solveScratch() {
 	parsePayout();
 	var row;
 	var table = [];
+	var revealed = 0;
 	for ( var i = 0; i < size * size; i++ ) {
 		if ( i % size == 0 ) {
 			row = [];
 			table.push(row);
 		}
-		row.push(parseInt($("#scratch select[name='" + i + "'] option:selected").val()));
+		var v = parseInt($("#scratch select[name='" + i + "'] option:selected").val());
+		if ( v != 0 ) revealed++;
+		row.push(v);
 	}
 	var solver = new Solver();
 	var result = solver.solve(table, payout);
@@ -162,27 +175,28 @@ function solveScratch() {
 			maxvalue = result[i];
 		}
 	}
-	$("#scratch .exp").removeClass("success");
+	$("#scratch .exp").removeClass("success").removeClass("active");
+	var highlightClass = "success";
+	if ( revealed != maxRevealedNums ) highlightClass = "active";
 	if ( maxindex < size ) {
-		highlightHorizontal(maxindex);
-		$("#er" + maxindex).addClass("success");
+		highlightHorizontal(maxindex, highlightClass);
+		$("#er" + maxindex).addClass(highlightClass);
 	} else if ( maxindex < size * 2 ) {
-		highlightVertical(maxindex - size);
-		$("#ec" + (maxindex - size)).addClass("success");
+		highlightVertical(maxindex - size, highlightClass);
+		$("#ec" + (maxindex - size)).addClass(highlightClass);
 	} else {
-		highlightDiagonal(maxindex - size * 2);
-		$("#ed" + (maxindex - size * 2)).addClass("success");
+		highlightDiagonal(maxindex - size * 2, highlightClass);
+		$("#ed" + (maxindex - size * 2)).addClass(highlightClass);
 	}
 
 }
 
 function resetScratch() {
-	$("#scratch td").removeClass("has-error").removeClass("success")
-			.removeClass("danger");
+	clearCellClass($("#scratch td"));
 	$("#scratchform input[name='solve']").attr("disabled", "disabled");
 	$("#scratch select").val("0");
 	$("#scratch .exp").html("&nbsp;");
-	$("#scratch .exp").removeClass("success");
+	clearCellClass($("#scratch .exp"));
 }
 
 function createPayoutCells(n) {
