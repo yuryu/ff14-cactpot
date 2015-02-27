@@ -193,7 +193,7 @@ function solveScratch() {
 
 	var highlightClass = "success";
 	if ( revealed != maxRevealedNums ) {
-		suggestNext(table, result);
+		Cact.recommend();
 	} else {
 		maxindex.forEach(function(v, i, a){
 			if ( v < size ) {
