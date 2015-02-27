@@ -1,1 +1,1 @@
-= FF14 Cactpot Solver =
+# FF14 Cactpot Solver
