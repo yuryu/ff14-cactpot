@@ -54,7 +54,7 @@ function clearCellClass(cell) {
 
 function validateScratch() {
 	var ints = {};
-	var count = 0;
+	var revealed = 0;
 	var success = true;
 	var table = [];
 	for ( var i = 0; i < size * size; i++ ) {
@@ -77,10 +77,10 @@ function validateScratch() {
 				success = false;
 			}
 			ints[v] = [i];
-			count++;
+			revealed++;
 		}
 	}
-	if ( count > maxRevealedNums ) {
+	if ( revealed > maxRevealedNums ) {
 		for ( var i in ints ) {
 			if ( ints.hasOwnProperty(i) ) {
 				ints[i].forEach(function(v, i, a){
@@ -91,7 +91,7 @@ function validateScratch() {
 		}
 		return false;
 	}
-	return success;
+	return success && revealed >= requiredNums;
 }
 
 function createScratch(table) {
