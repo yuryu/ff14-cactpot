@@ -31,7 +31,7 @@ var payout = [
 ];
 
 var size = 3;
-var requiredNums = 2;
+var requiredNums = 1;
 var maxRevealedNums = 4;
 var payoutMin = 6;
 var payoutMax = 24;
@@ -84,7 +84,7 @@ function validateScratch() {
 			count++;
 		}
 	}
-	if ( count == 1 ) {
+	if ( count == 1  && requiredNums > 1) {
 		if ( table[1][1] == 0 ) {
 			$("#" + rowColStr(1, 1)).addClass("info");
 		} else {
@@ -193,7 +193,7 @@ function solveScratch() {
 
 	var highlightClass = "success";
 	if ( revealed != maxRevealedNums ) {
-		Cact.recommend();
+        recommend();
 	} else {
 		maxindex.forEach(function(v, i, a){
 			if ( v < size ) {
@@ -208,55 +208,6 @@ function solveScratch() {
 			}
 		});
 	}
-}
-
-function suggestNext(table, result) {
-	var tablerank = [];
-	var row;
-	for ( var i = 0; i < size * size; i++ ) {
-		if ( i % size == 0 ) {
-			row = [];
-			tablerank.push(row);
-		}
-		row.push(0);
-	}
-	result.forEach(function(r, i, a) {
-		if ( i < size ) {
-			for ( var col = 0; col < size; col++ ) {
-				tablerank[i][col] += r;
-			}
-		} else if ( i < size * 2 ) {
-			for ( var row = 0; row < size; row++ ) {
-				tablerank[row][i - size] += r;
-			}
-		} else {
-			var dir = i - (size * 2);
-			for ( var row = 0 ; row < size; row++ ) {
-				var col = row;
-				if ( dir == 1 ) {
-					col = size - row - 1;
-				}
-				tablerank[row][col] += r;
-			}
-		}
-	});
-
-	var bestvalue = 0;
-	var best = [];
-	for ( var row = 0; row < size; row++ ) {
-		for ( var col = 0; col < size; col++ ) {
-			if ( table[row][col] != 0 ) continue;
-			if ( bestvalue == tablerank[row][col] ) {
-				best.push([row, col]);
-			} else if ( bestvalue < tablerank[row][col] ) {
-				best = [[row, col]];
-				bestvalue = tablerank[row][col];
-			}
-		}
-	}
-	best.forEach(function(v, i, a) {
-		$("#" + rowColStr(v[0], v[1])).addClass("info");
-	});
 }
 
 function resetScratch() {
@@ -289,6 +240,27 @@ function parsePayout() {
 		payout[i] = parseInt($("#p" + i).val());
 	}
 }
+
+function recommend() {
+   var state = [0,0,0,0,0,0,0,0,0];
+   for (var row = 0; row < 3; row++) {
+      for (var col = 0; col < 3; col++) {
+         var index = col + row*3;
+         var val = parseInt($('select[name="' + index + '"]').val());
+         if (val > 0) {
+            state[index] = val;
+         }
+      }
+   }
+   var recommendations = PerfectCactpot.solve(state);
+   for (var i = 0; i < recommendations.length; i++) {
+      if (recommendations[i]) {
+         var col = i % 3;
+         var row = i / 3 | 0;
+         $("#" + rowColStr(row, col)).addClass("info");
+      }
+   }
+};
 
 $(document).ready(function() {
 	createScratch($("#scratch tbody"));
