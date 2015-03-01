@@ -47,10 +47,6 @@ function createOptions(n) {
 	return result;
 }
 
-function rowColStr(row, col) {
-	return "r" + row + "c" + col;
-}
-
 function clearCellClass(cell) {
 	cell.removeClass("has-error").removeClass("success")
 		.removeClass("info").removeClass("danger");
@@ -125,30 +121,6 @@ function createScratch(table) {
 			$("#scratchform input[name='solve']").attr("disabled", "disabled");
 		}
 	});
-}
-
-
-
-function highlightHorizontal(row, c) {
-	for ( var i = 0; i < size; i++ ) {
-		$("#" + rowColStr(row, i)).addClass(c);
-	}
-}
-
-function highlightVertical(col, c) {
-	for ( var i = 0; i < size; i++ ) {
-		$("#" + rowColStr(i, col)).addClass(c);
-	}
-}
-
-function highlightDiagonal(dir, c) {
-	for ( var i = 0 ; i < size; i++ ) {
-		var col = i;
-		if ( dir == 1 ) {
-			col = size - i - 1;
-		}
-		$("#" + rowColStr(i, col)).addClass(c);
-	}
 }
 
 function solveScratch() {
