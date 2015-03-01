@@ -84,16 +84,6 @@ function validateScratch() {
 			count++;
 		}
 	}
-	if ( count == 1  && requiredNums > 1) {
-		if ( table[1][1] == 0 ) {
-			$("#" + rowColStr(1, 1)).addClass("info");
-		} else {
-			$("#" + rowColStr(0, 0)).addClass("info");
-			$("#" + rowColStr(0, 2)).addClass("info");
-			$("#" + rowColStr(2, 0)).addClass("info");
-			$("#" + rowColStr(2, 2)).addClass("info");
-		}
-	}
 	if ( count > maxRevealedNums ) {
 		for ( var i in ints ) {
 			if ( ints.hasOwnProperty(i) ) {
@@ -105,7 +95,7 @@ function validateScratch() {
 		}
 		return false;
 	}
-	return count >= requiredNums && success;
+	return success;
 }
 
 function createScratch(table) {
@@ -183,8 +173,9 @@ function solveScratch() {
 	}
 	var recommendations = PerfectCactpot.solve(state, payout);
 	var ans = recommendations[1];
+	var exp = recommendations[2];
 	if ( revealed == maxRevealedNums ) {
-//		var exp = recommendations[2];
+		var exp = recommendations[2];
 		ans.forEach(function(v, i, a) {
 			if ( v ) $(".can" + i).addClass("success");
 		});
@@ -192,6 +183,9 @@ function solveScratch() {
 		ans.forEach(function(v, i, a) {
 			if ( v ) $("#sc" + i).addClass("info");
 		});
+	}
+	for ( var i = 0; i < exp.length; i++ ) {
+		$("#exp" + i).html(Math.floor(exp[i]));
 	}
 }
 

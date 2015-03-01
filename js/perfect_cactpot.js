@@ -63,12 +63,10 @@ var PerfectCactpot = {
        }
 
        // Count how many are visible
-       var num_revealed = 0;
-       for (var i = 0; i < 9; i++)
-       {
-           if (state[i] > 0)
-               num_revealed++;
-       }
+       var tmp = this.inspect_state(state);
+       var ids = tmp[0];
+       var unknowns = tmp[1];
+       var num_revealed = 9 - tmp[2];
 
        // If four are visible, we are picking between eight rows. Otherwise, we are picking
        // between nine tiles (although we'll never be picking revealed tiles)
@@ -81,6 +79,8 @@ var PerfectCactpot = {
        for (var i = 0; i < num_options; i++)
            which_to_flip[i] = false;
        var value = 0;
+       var tot_win = new Array(this.candidates.length);
+
        if (num_revealed == 0) {
            // You don't get to choose the first spot, but here's the answer anyway
            return [0, [true, false, true, false, false, false, true, false, true]];
@@ -99,106 +99,73 @@ var PerfectCactpot = {
                // Using our pre-calculated library, this is much faster
                value = this.solve_1 (state, payout, which_to_flip);
            }
+       } else if ( num_revealed == 4 ) {
+           value = this.calc_expectation(state, payout, ids, unknowns, which_to_flip, tot_win);
        } else {
            value = this.solve_any(state, payout, which_to_flip);
        }
-       var result = [value, which_to_flip];
-       if (window.console) console.log("Expected value: " + result[0] + " MGP");
+       if ( num_revealed != 4 ) {
+         var dummy_array = [];
+         this.calc_expectation(state, payout, ids, unknowns, dummy_array, tot_win);
+       }
+       var result = [value, which_to_flip, tot_win];
+       if (window.console) console.log("Expected value: " + value + " MGP");
        return result;
+   },
+
+   // returns [ids, unknowns, num_hidden]
+   inspect_state: function(state) {
+       var ids = [];
+       var unknowns = [];
+       var num_hidden = 0;
+       var has = [];
+
+       for ( var i = 0; i < 9; i++ ) {
+           if ( ! state[i] ) {
+               // Storing the ids of all locations which are currently unrevealed
+               ids.push(i);
+               num_hidden++;
+           } else {
+               // Checking which numbers are currently visible
+               has[state[i]] = 1;
+           }
+       }
+
+       // From the previous step, we know which numbers are not yet visible:
+       //  these are the possible unknowns
+       for ( var i = 1; i <= 9; i++ ) {
+           if ( ! has[i] )
+           {
+               unknowns.push(i);
+           }
+       }
+       return [ids, unknowns, num_hidden];
    },
 
    solve_any: function(state, rewards, options)
    {
        var dummy_array = [];
-       var unknowns = [];
-       var ids = [];
-       var has = [];
-       var tot_win = [];
-       var num_hidden = 0;
-       var num_revealed = 0;
-       for (var i = 0; i < 9; i++)
-       {
-           if (!state[i])
-           {
-               // Storing the ids of all locations which are currently unrevealed
-               ids.push(i);
-               tot_win.push(0);
-           }
-           else
-           {
-               // Checking which numbers are currently visible
-               has[state[i]] = 1;
-           }
-       }
-       num_hidden = tot_win.length
-       num_revealed = 9 - num_hidden;
-       
-       // From the previous step, we know which numbers are not yet visible:
-       //  these are the possible unknowns
-       for (var i = 1; i <= 9; i++)
-       {
-           if (!has[i])
-           {
-               unknowns.push(i);
-           }
-       }
-       
-       if (num_revealed >= maxRevealedNums) {
+
+       var tmp = this.inspect_state(state);
+       var ids = tmp[0];
+       var unknowns = tmp[1];
+       var num_hidden = tmp[2];
+
+       if ( ( 9 - num_hidden ) >= maxRevealedNums ) {
           // We've revealed as many numbers as we can -- time for the final assessment
-          var permutations = 0;
-          tot_win = [0,0,0,0,0,0,0,0]; // One for each row, column, and diagonal
-          // Loop over all possible permutations on the unknowns
-          do
-          {
-              permutations++;
-              for (var i = 0; i < ids.length; i++) {
-                  state[ids[i]] = unknowns[i];
-              }
-              // For each row, cumulatively sum the winnings for picking that row
-              tot_win[0] += rewards[state[0] + state[1] + state[2]];
-              tot_win[1] += rewards[state[3] + state[4] + state[5]];
-              tot_win[2] += rewards[state[6] + state[7] + state[8]];
-              tot_win[3] += rewards[state[0] + state[3] + state[6]];
-              tot_win[4] += rewards[state[1] + state[4] + state[7]];
-              tot_win[5] += rewards[state[2] + state[5] + state[8]];
-              tot_win[6] += rewards[state[0] + state[4] + state[8]];
-              tot_win[7] += rewards[state[2] + state[4] + state[6]];
-          } while (this.next_permutation(unknowns));
-          // Find the maximum. Start by assuming option 0 is best.
-          var curmax = tot_win[0];
-          options[0] = true;
-          for (var i = 1; i < 8; i++)
-          {
-              // If another row yielded a higher expected value:
-              if (tot_win[i] > curmax)
-              {
-                  // Mark all the previous rows as FALSE (not optimal) and the current one as TRUE
-                  curmax = tot_win[i];
-                  for (var j = 0; j < i; j++)
-                      options[j] = false;
-                  options[i] = true;
-              }
-              else if(tot_win[i] == curmax)
-              {
-                  // For a tie, mark the current one as TRUE, and leave the previous ones intact
-                  options[i] = true;
-              }
-          }
-          // The current totals are for a number of possible configurations.
-          // Divide by that number to get the actual expected value.
-          return curmax / permutations;
+          return this.calc_expectation(state, rewards, ids, unknowns, options, dummy_array);
        } else {
           // Determine which tile to reveal next.
           // Loop over every unknown tile and every possible value that could appear.
           // Solve the resulting cases with a recursive call to solve_any.
-          for (var i = 0; i < num_hidden; i++)
-          {
+          var tot_win = new Array(num_hidden);
+          for ( var i = 0; i < num_hidden; i++ ) tot_win[i] = 0;
+          for ( var i = 0; i < num_hidden; i++ ) {
               for (var j = 0; j < num_hidden; j++)
               {
                   state[ids[i]] = unknowns[j];
                   tot_win[i] += this.solve_any(state, rewards, dummy_array);
-                  for (var k = 0; k < num_hidden; k++)
-                      state[ids[k]] = 0;
+                  state[ids[i]] = 0;
               }
           }
           var curmax = tot_win[0];
@@ -234,6 +201,61 @@ var PerfectCactpot = {
       return this.openings[stateStr][0];
    },
 
+   // calculate expectation
+   calc_expectation: function(state, rewards, ids, unknowns, options, tot_win) {
+     for ( var i = 0; i < this.candidates.length; i++ ) tot_win[i] = 0;
+
+     var permutations = 0;
+
+     // Loop over all possible permutations on the unknowns
+     do {
+         permutations++;
+         for (var i = 0; i < ids.length; i++) {
+             state[ids[i]] = unknowns[i];
+         }
+         // For each row, cumulatively sum the winnings for picking that row
+         tot_win[0] += rewards[state[0] + state[1] + state[2]];
+         tot_win[1] += rewards[state[3] + state[4] + state[5]];
+         tot_win[2] += rewards[state[6] + state[7] + state[8]];
+         tot_win[3] += rewards[state[0] + state[3] + state[6]];
+         tot_win[4] += rewards[state[1] + state[4] + state[7]];
+         tot_win[5] += rewards[state[2] + state[5] + state[8]];
+         tot_win[6] += rewards[state[0] + state[4] + state[8]];
+         tot_win[7] += rewards[state[2] + state[4] + state[6]];
+     } while (this.next_permutation(unknowns));
+     // Restore state for next use
+     for (var i = 0; i < ids.length; i++ )
+       state[ids[i]] = 0;
+
+     for ( var i = 0; i < tot_win.length; i++ )
+       tot_win[i] /= permutations;
+
+     // Find the maximum. Start by assuming option 0 is best.
+     var curmax = tot_win[0];
+     options[0] = true;
+     for (var i = 1; i < 8; i++)
+     {
+         // If another row yielded a higher expected value:
+         if (tot_win[i] > curmax)
+         {
+             // Mark all the previous rows as FALSE (not optimal) and the current one as TRUE
+             curmax = tot_win[i];
+             for (var j = 0; j < i; j++)
+                 options[j] = false;
+             options[i] = true;
+         }
+         else if(tot_win[i] == curmax)
+         {
+             // For a tie, mark the current one as TRUE, and leave the previous ones intact
+             options[i] = true;
+         }
+     }
+     // The current totals are for a number of possible configurations.
+     // Divide by that number to get the actual expected value.
+     if ( isNaN(curmax) ) throw "Something is wrong.";
+     return curmax;
+   },
+
    next_permutation: function(array)
    {
       var i = array.length - 1;
@@ -243,7 +265,9 @@ var PerfectCactpot = {
         if ( array[i] < array[k] ) {
           var j = array.length - 1;
           while ( array[i] >= array[j] ) j--;
-          array[i] = [array[j], array[j] = array[i]][0];
+          var tmp = array[j];
+          array[j] = array[i];
+          array[i] = tmp;
           this.reverse(array, k, array.length);
           return true;
         }
