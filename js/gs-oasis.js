@@ -109,15 +109,20 @@ function validateScratch() {
 }
 
 function createScratch(table) {
-	var c = 0;
 	var options = createOptions(size * size);
 	for (var row = 0; row < size; row++ ) {
 		var tr = $("<tr id='row" + row + "'></tr>").appendTo(table);
-		tr.append("<td id='er" + row + "' class='exp'></td>")
+		tr.append("<td id='exp" + row + "' class='exp can" + row + "'></td>");
 		for ( var col = 0; col < size; col++) {
-			tr.append("<td id='" + rowColStr(row, col) + "'><select name='" + c + "' class='form-control'>"
+			var i = row * 3 + col;
+			tr.append("<td id='sc" + i + "'><select name='" + i + "' class='form-control'>"
 				+ options + "</select></td>");
-			c++;
+		}
+	}
+	var candidates = PerfectCactpot.candidates;
+	for ( var i = 0; i < candidates.length; i++ ) {
+		for ( var j = 0; j < candidates[i].length; j++ ) {
+			$("#sc" + candidates[i][j]).addClass("can" + i);
 		}
 	}
 	$("#scratch select").change(function() {
@@ -158,54 +163,34 @@ function highlightDiagonal(dir, c) {
 
 function solveScratch() {
 	parsePayout();
-	var row;
 	var table = [];
 	var revealed = 0;
 	for ( var i = 0; i < size * size; i++ ) {
-		if ( i % size == 0 ) {
-			row = [];
-			table.push(row);
-		}
 		var v = parseInt($("#scratch select[name='" + i + "'] option:selected").val());
 		if ( v != 0 ) revealed++;
-		row.push(v);
-	}
-	var solver = new Solver();
-	var result = solver.solve(table, payout);
-	var maxindex = [];
-	var maxvalue = result[0];
-	for ( var i = 0; i < result.length; i++ ) {
-		if ( i < size ) {
-			$("#er" + i).text(Math.floor(result[i]));
-		} else if ( i < size * 2 ) {
-			$("#ec" + (i - size)).text(Math.floor(result[i]));
-		} else {
-			$("#ed" + (i - size * 2)).text(Math.floor(result[i]));
-		}
-		if ( maxvalue == result[i] ) {
-			maxindex.push(i);
-		} else if ( maxvalue < result[i] ) {
-			maxindex = [i];
-			maxvalue = result[i];
-		}
+		table.push(v);
 	}
 	$("#scratch .exp").removeClass("success");
 
 	var highlightClass = "success";
-	if ( revealed != maxRevealedNums ) {
-        recommend();
+	var state = [];
+	for (var row = 0; row < 3; row++) {
+		for (var col = 0; col < 3; col++) {
+			var index = col + row*3;
+			var val = parseInt($('select[name="' + index + '"]').val());
+			state.push(val);
+		}
+	}
+	var recommendations = PerfectCactpot.solve(state, payout);
+	var ans = recommendations[1];
+	if ( revealed == maxRevealedNums ) {
+//		var exp = recommendations[2];
+		ans.forEach(function(v, i, a) {
+			if ( v ) $(".can" + i).addClass("success");
+		});
 	} else {
-		maxindex.forEach(function(v, i, a){
-			if ( v < size ) {
-				highlightHorizontal(v, highlightClass);
-				$("#er" + v).addClass(highlightClass);
-			} else if ( v < size * 2 ) {
-				highlightVertical(v - size, highlightClass);
-				$("#ec" + (v - size)).addClass(highlightClass);
-			} else {
-				highlightDiagonal(v - size * 2, highlightClass);
-				$("#ed" + (v - size * 2)).addClass(highlightClass);
-			}
+		ans.forEach(function(v, i, a) {
+			if ( v ) $("#sc" + i).addClass("info");
 		});
 	}
 }
@@ -240,27 +225,6 @@ function parsePayout() {
 		payout[i] = parseInt($("#p" + i).val());
 	}
 }
-
-function recommend() {
-   var state = [0,0,0,0,0,0,0,0,0];
-   for (var row = 0; row < 3; row++) {
-      for (var col = 0; col < 3; col++) {
-         var index = col + row*3;
-         var val = parseInt($('select[name="' + index + '"]').val());
-         if (val > 0) {
-            state[index] = val;
-         }
-      }
-   }
-   var recommendations = PerfectCactpot.solve(state);
-   for (var i = 0; i < recommendations.length; i++) {
-      if (recommendations[i]) {
-         var col = i % 3;
-         var row = i / 3 | 0;
-         $("#" + rowColStr(row, col)).addClass("info");
-      }
-   }
-};
 
 $(document).ready(function() {
 	createScratch($("#scratch tbody"));

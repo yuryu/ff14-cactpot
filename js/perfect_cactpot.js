@@ -38,30 +38,18 @@ var PerfectCactpot = {
               "000000001":[1677.7854166666664,[false,false,true,false,false,false,true,false,false]],"000000002":[1665.8127976190476,[false,false,true,false,false,false,true,false,false]],"000000003":[1662.504761904762,[false,false,true,false,false,false,true,false,false]],"000000004":[1365.0047619047618,[false,false,false,false,true,false,false,false,false]],"000000005":[1359.5589285714286,[false,false,false,false,true,false,false,false,false]],"000000006":[1364.3044642857142,[false,false,false,false,true,false,false,false,false]],"000000007":[1454.5455357142855,[false,false,false,false,true,false,false,false,false]],"000000008":[1527.0875,[false,false,true,false,true,false,true,false,false]],"000000009":[1517.7214285714285,[false,false,true,false,true,false,true,false,false]]
    },
    defaultPayouts: [0, 0, 0, 0, 0, 0, 10000, 36, 720, 360, 80, 252, 108, 72, 54, 180, 72, 180, 119, 36, 306, 1080, 144, 1800, 3600],
-   
-   // Provide recommendations to /u/Yuryu's solver app
-   recommend: function() {
-      var state = [0,0,0,0,0,0,0,0,0];
-      for (var row = 0; row < 3; row++) {
-         for (var col = 0; col < 3; col++) {
-            var index = col + row*3;
-            var val = parseInt($('select[name="' + index + '"]').val());
-            if (val > 0) {
-               state[index] = val;
-            }
-         }
-      }
-      var recommendations = this.solve(state);
-      for (var i = 0; i < recommendations.length; i++) {
-         if (recommendations[i]) {
-            var col = i % 3;
-            var row = i / 3 | 0;
-            $("#" + rowColStr(row, col)).addClass("info");
-         }
-      }
-   },
+   candidates: [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+   ],
 
-   solve: function(input)
+   solve: function(input, payout)
    {
        var state = [];
        if (typeof(input) == 'string') {
@@ -95,7 +83,7 @@ var PerfectCactpot = {
        var value = 0;
        if (num_revealed == 0) {
            // You don't get to choose the first spot, but here's the answer anyway
-           return [true, false, true, false, false, false, true, false, true];
+           return [0, [true, false, true, false, false, false, true, false, true]];
        } else if (num_revealed == 1) {
            var editedPayouts = false;
            for (var i = 6; i < payout.length; i++) {
@@ -114,10 +102,11 @@ var PerfectCactpot = {
        } else {
            value = this.solve_any(state, payout, which_to_flip);
        }
-       if (window.console) console.log("Expected value: " + value + " MGP");
-       return which_to_flip;
+       var result = [value, which_to_flip];
+       if (window.console) console.log("Expected value: " + result[0] + " MGP");
+       return result;
    },
-   
+
    solve_any: function(state, rewards, options)
    {
        var dummy_array = [];
