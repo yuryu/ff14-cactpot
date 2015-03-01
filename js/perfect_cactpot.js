@@ -247,56 +247,28 @@ var PerfectCactpot = {
 
    next_permutation: function(array)
    {
-      var begin = 0;
-      var end = array.length;
-      if (begin == end) return false;
-
-      var i = begin;
-      ++i;
-      if (i == end) return false;
-
-      i = end;
-      --i;
-
-      while (true)
-      {
-         var j = i;
-         --i;
-
-         if (array[i] < array[j])
-         {
-            var k = end;
-
-            while (!(array[i] < array[--k])) {
-               /* pass */;
-            }
-
-            this.swap(array, i, k);
-            this.reverse(array, j, end);
-            return true;
-         }
-
-         if (i == begin)
-         {
-            this.reverse(array, begin, end);
-            return false;
-         }
+      var i = array.length - 1;
+      while ( i > 0 ) {
+        var k = i;
+        i--;
+        if ( array[i] < array[k] ) {
+          var j = array.length - 1;
+          while ( array[i] >= array[j] ) j--;
+          array[i] = [array[j], array[j] = array[i]][0];
+          this.reverse(array, k, array.length);
+          return true;
+        }
       }
+      return false;
    },
 
    reverse: function(array, begin, end) {
-      var howmany = end - begin;
       var revSlice = array.slice(begin, end).reverse();
+
       for (var i = 0; i < revSlice.length; i++) {
-         array.splice(begin + i, 1, revSlice[i]);
+         array[begin + i] = revSlice[i];
       }
    },
-
-   swap: function(array, i, j) {
-      var tmp = array[i];
-      array[i] = array[j];
-      array[j] = tmp;
-   }
 
 };
 
